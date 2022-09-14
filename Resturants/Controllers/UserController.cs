@@ -4,6 +4,7 @@ using Resturants.DTO.Requests;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
 using System.IO;
+using System.Xml.Linq;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Controllers
@@ -18,6 +19,7 @@ namespace Resturants.Controllers
         public UserController(IUserRepository userRepository, IHostingEnvironment environment)
         {
             this._userRepository = userRepository;
+            this._environment = environment;
         }
 
         [HttpGet]
@@ -97,24 +99,28 @@ namespace Resturants.Controllers
 
 
         [HttpPost("UploadFile")]
-        public async Task<IActionResult> UploadFile()
+        public async Task<IActionResult> UploadFile([FromForm] IFormFile file)
         {
-            try
+            if (file != null)
             {
-                var file = Request.Form.Files[0];
-                string fName = file.FileName;
-                string path = Path.Combine(_environment.ContentRootPath, "Images", file.FileName);
-                using (var stream = new FileStream(path, FileMode.Create))
+                try
                 {
-                    await file.CopyToAsync(stream);
+                    string fName = file.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+                    return Ok(new { status = true, url = "https://localhost:7194/Images/" + fName, coed = 200 });
                 }
-                //   return path;
-                //  return "https://localhost:7194/" + fName;
-                return Ok(new { path = path, url = "https://localhost:7194/" + fName });
+                catch (Exception exception)
+                {
+                    return BadRequest(new { status = false, message = "error: " + exception.Message, coed = 400 });
+                }
             }
-            catch (Exception ex)
+            else
             {
-                throw;
+                return BadRequest(new { status = false, message = "file must not empty or null!", coed = 400 });
             }
         }
 

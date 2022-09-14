@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Resturants.Helper;
 using Resturants.Repositories.Interfaces;
@@ -34,12 +35,21 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+           Path.Combine(builder.Environment.ContentRootPath, "Images")),
+    RequestPath = "/Images"
+});
+
 //app.UseAuthentication();
 //app.UseAuthorization();
 //app.UseMiddleware<AuthMiddelware>();
 
 app.UseStaticFiles();
 app.MapControllers();
+
+app.Run();
 
 void JwtBearer(WebApplicationBuilder builder)
 {
@@ -76,5 +86,3 @@ void AddDataBase(WebApplicationBuilder builder)
             ));
 }
 
-
-app.Run();

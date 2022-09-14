@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resturants.DTO.Requests;
 using Resturants.DTO.Responses;
 using Resturants.Helper;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -131,7 +129,7 @@ namespace Resturants.Repositories.other
                 Status = true,
                 Message = "Account created successfully",
                 Code = 200,
-                Data = new { user = _map.Map<VendorResponse>(currentUser) }
+                Data = new { user = _map.Map<UserResponse>(currentUser) }
             };
             return response;
         }

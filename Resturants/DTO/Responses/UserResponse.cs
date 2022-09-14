@@ -15,12 +15,12 @@ namespace Resturants.DTO.Responses
             Token = "";
         }
         public int Id { get; set; }
-        public string? Name { get; set; }
-        public string? Email { get; set; } = "";
-        public string? Phone { get; set; } = "";
-        public string Address { get; set; } = "";
-        public string Photo { get; set; } = "";
-        public float TotalPayment { get; set; } = 0;
-        public string? Token { get; set; } = "";
+        public string Name { get; set; }
+        public string Email { get; set; } 
+        public string Phone { get; set; } 
+        public string Address { get; set; }
+        public string Photo { get; set; }
+        public float TotalPayment { get; set; } 
+        public string Token { get; set; }
     }
 }
