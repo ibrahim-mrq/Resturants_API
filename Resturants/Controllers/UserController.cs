@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Resturants.DTO.Requests;
+using Resturants.Models;
 using Resturants.Repositories.Interfaces;
+using System.IO;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Controllers
 {
@@ -9,8 +13,9 @@ namespace Resturants.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
+        private readonly IHostingEnvironment _environment;
 
-        public UserController(IUserRepository userRepository)
+        public UserController(IUserRepository userRepository, IHostingEnvironment environment)
         {
             this._userRepository = userRepository;
         }
@@ -70,9 +75,9 @@ namespace Resturants.Controllers
         }
 
         [HttpGet("LoadProfile/{Id}")]
-        public IActionResult LoadProfile(int Id)
+        public IActionResult LoadProfile(int Id, [FromHeader] string token)
         {
-            var respone = _userRepository.LoadProfile(Id);
+            var respone = _userRepository.LoadProfile(Id, token);
             return Ok(respone);
         }
 
@@ -90,6 +95,28 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
+
+        [HttpPost("UploadFile")]
+        public async Task<IActionResult> UploadFile()
+        {
+            try
+            {
+                var file = Request.Form.Files[0];
+                string fName = file.FileName;
+                string path = Path.Combine(_environment.ContentRootPath, "Images", file.FileName);
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                //   return path;
+                //  return "https://localhost:7194/" + fName;
+                return Ok(new { path = path, url = "https://localhost:7194/" + fName });
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
 
     }
 }

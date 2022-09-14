@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resturants.DTO.Requests;
 using Resturants.DTO.Responses;
@@ -14,24 +15,25 @@ namespace Resturants.Repositories.other
 {
     public class UserRepository : IUserRepository
     {
-        private readonly DBContext _dBContext;
+        private readonly DBContext _dbContext;
         private readonly IMapper _map;
 
         public UserRepository(DBContext dBContext, IMapper map)
         {
-            this._dBContext = dBContext;
+            this._dbContext = dBContext;
             this._map = map;
         }
 
         public OperationType GetAllUsers()
         {
-            var list = _dBContext.Users;
+            var users = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER));
+            var vendors = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_VENDOR));
             var result = new OperationType()
             {
                 Status = true,
                 Code = 200,
                 Message = "success",
-                Data = new { users = list.ToList() }
+                Data = new { users = users.ToList(), vendors = vendors }
             };
 
             return result;
@@ -39,7 +41,7 @@ namespace Resturants.Repositories.other
 
         public OperationType GetUsers()
         {
-            var list = _dBContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER));
+            var list = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER) && x.IsDelete == false);
             var result = new OperationType()
             {
                 Status = true,
@@ -52,7 +54,7 @@ namespace Resturants.Repositories.other
 
         public OperationType GetVendors()
         {
-            var list = _dBContext.Users.Where(x => x.Type.Equals(Constants.TYPE_VENDOR));
+            var list = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_VENDOR) && x.IsDelete == false);
             var result = new OperationType()
             {
                 Status = true,
@@ -70,7 +72,7 @@ namespace Resturants.Repositories.other
                 return Constants.IsNullOrEmpty(userLogin);
             }
 
-            var user = _dBContext.Users.Where(x => x.Phone.Equals(userLogin.Phone)).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Phone.Equals(userLogin.Phone)).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "Phone Number not exists!", Code = 400 };
@@ -107,7 +109,7 @@ namespace Resturants.Repositories.other
                 userRequest.Photo = Constants.TYPE_LOGO;
             }
 
-            if (_dBContext.Users.Any(x => x.Phone.Equals(userRequest.Phone)))
+            if (_dbContext.Users.Any(x => x.Phone.Equals(userRequest.Phone)))
             {
                 return new OperationType() { Status = false, Message = "Phone Number already exists!", Code = 400 };
             }
@@ -122,8 +124,8 @@ namespace Resturants.Repositories.other
             currentUser.PasswordHash = hash;
             currentUser.PasswordSalt = salt;
             currentUser.Token = GenerateToken(currentUser);
-            _dBContext.Users.Add(currentUser);
-            _dBContext.SaveChanges();
+            _dbContext.Users.Add(currentUser);
+            _dbContext.SaveChanges();
             var response = new OperationType()
             {
                 Status = true,
@@ -150,7 +152,7 @@ namespace Resturants.Repositories.other
                 vendorRequest.Photo = Constants.TYPE_LOGO;
             }
 
-            if (_dBContext.Users.Any(x => x.Phone.Equals(vendorRequest.Phone)))
+            if (_dbContext.Users.Any(x => x.Phone.Equals(vendorRequest.Phone)))
             {
                 return new OperationType() { Status = false, Message = "Phone Number already exists!", Code = 400 };
             }
@@ -165,8 +167,8 @@ namespace Resturants.Repositories.other
             currentUser.PasswordHash = hash;
             currentUser.PasswordSalt = salt;
             currentUser.Token = GenerateToken(currentUser);
-            _dBContext.Users.Add(currentUser);
-            _dBContext.SaveChanges();
+            _dbContext.Users.Add(currentUser);
+            _dbContext.SaveChanges();
             var response = new OperationType()
             {
                 Status = true,
@@ -177,15 +179,15 @@ namespace Resturants.Repositories.other
             return response;
         }
 
-        public OperationType UpdateUser(int id, VendorRequest vendorRequest)
+        public OperationType UpdateVendor(int id, VendorRequest vendorRequest)
         {
-            var user = _dBContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
             }
             var currentUser = _map.Map(vendorRequest, user);
-            _dBContext.SaveChanges();
+            _dbContext.SaveChanges();
             var response = new OperationType()
             {
                 Status = true,
@@ -196,12 +198,16 @@ namespace Resturants.Repositories.other
             return response;
         }
 
-        public OperationType LoadProfile(int id)
+        public OperationType LoadProfile(int id, string token)
         {
-            var user = _dBContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(token) || user.Token != token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized! \n" + token, Code = 401 };
             }
             var currentUser = new object();
             if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
@@ -218,7 +224,7 @@ namespace Resturants.Repositories.other
 
         public OperationType DeleteUser(int id)
         {
-            var user = _dBContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
@@ -234,19 +240,20 @@ namespace Resturants.Repositories.other
                 Code = 200,
                 Data = new { user = currentUser }
             };
-            _dBContext.Users.Update(user);
-            _dBContext.SaveChanges();
+            _dbContext.Users.Update(user);
+            _dbContext.SaveChanges();
             return response;
         }
 
         public OperationType ClearAllUser()
         {
-            var list = _dBContext.Users.ToList();
-            foreach (var item in _dBContext.Users)
+            var list = _dbContext.Users.ToList();
+            foreach (var item in _dbContext.Users)
             {
-                _dBContext.Users.Remove(item);
+                _dbContext.Users.Remove(item);
+                //    _dbContext.Users.Cast<User>().ToList().Remove(item);    
             }
-            _dBContext.SaveChanges();
+            _dbContext.SaveChanges();
             return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = list } }; ;
         }
 

@@ -12,12 +12,12 @@ namespace Resturants.Middelwares
         }
 
 
-        public async Task InvokeAsync(HttpContext context, DBContext _dBContext)
+        public async Task InvokeAsync(HttpContext context, DBContext _dbContext)
         {
 
             var Token = context.Request.Headers["token"].FirstOrDefault()?.Split(" ").Last();
 
-           /* var result = _dBContext.tokens.Where(x =>
+           /* var result = _dbContext.tokens.Where(x =>
                    x.IsActive == true
                    && x.Token == Token
                    && x.Expires == DateTime.Now
