@@ -84,6 +84,8 @@ namespace Resturants.Repositories.other
                 return new OperationType() { Status = false, Message = "incorrect Password!", Code = 400 };
             }
             user.Token = GenerateToken(user);
+            _dbContext.Users.Update(user);
+            _dbContext.SaveChanges();
 
             var currentUser = new object();
             if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
@@ -226,7 +228,7 @@ namespace Resturants.Repositories.other
 
         public OperationType UpdateUser(int Id, UserUpdateRequest userUpdate)
         {
-            var user = _dbContext.Users.Where(x => x.Id == Id && x.IsDelete== false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
@@ -246,8 +248,16 @@ namespace Resturants.Repositories.other
                 }
                 catch (Exception) { }
             }
-            var currentUser = _map.Map(userUpdate, user);
+
+            user.Photo = filePath;
+            var updateUser = _map.Map(userUpdate, user);
+         //   _dbContext.Users.Update(user);
             _dbContext.SaveChanges();
+
+            var currentUser = new object();
+            if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
+            else currentUser = _map.Map<VendorResponse>(user);
+
             var response = new OperationType()
             {
                 Status = true,
@@ -267,7 +277,7 @@ namespace Resturants.Repositories.other
             }
             if (string.IsNullOrEmpty(token) || user.Token != token)
             {
-                return new OperationType() { Status = false, Message = "Unauthorized! \n" + token, Code = 401 };
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
             }
             var currentUser = new object();
             if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
@@ -307,13 +317,19 @@ namespace Resturants.Repositories.other
 
         public OperationType ClearAllUser()
         {
+
+
+            var toDelete = _dbContext.Users.ToList();
+            _dbContext.Users.RemoveRange(toDelete);
+            _dbContext.SaveChanges();
+/*
             var list = _dbContext.Users.ToList();
             foreach (var item in _dbContext.Users)
             {
                 _dbContext.Users.Remove(item);
             }
-            _dbContext.SaveChanges();
-            return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = list } };
+            _dbContext.SaveChanges();*/
+            return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = toDelete } };
         }
 
         private string GenerateToken(User currentUser)

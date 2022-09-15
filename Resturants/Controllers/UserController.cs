@@ -1,11 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
+﻿using Microsoft.AspNetCore.Mvc;
 using Resturants.DTO.Requests;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
-using System.IO;
-using System.Xml.Linq;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Controllers
@@ -67,8 +63,8 @@ namespace Resturants.Controllers
         }
 
 
-        [HttpPost("UpdateUser/{Id}")]
-        public IActionResult UpdateUser([FromForm] int Id, UserUpdateRequest userUpdate)
+        [HttpPut("UpdateUser/{Id}")]
+        public IActionResult UpdateUser(int Id, [FromForm] UserUpdateRequest userUpdate)
         {
             var respone = _userRepository.UpdateUser(Id, userUpdate);
             if (!respone.Status)
