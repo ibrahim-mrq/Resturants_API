@@ -8,18 +8,21 @@ using Resturants.Repositories.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Repositories.other
 {
     public class UserRepository : IUserRepository
     {
         private readonly DBContext _dbContext;
+        private readonly IHostingEnvironment _environment;
         private readonly IMapper _map;
 
-        public UserRepository(DBContext dBContext, IMapper map)
+        public UserRepository(DBContext dBContext, IMapper map, IHostingEnvironment environment)
         {
             this._dbContext = dBContext;
             this._map = map;
+            this._environment = environment;
         }
 
         public OperationType GetAllUsers()
@@ -93,6 +96,7 @@ namespace Resturants.Repositories.other
 
         public OperationType UserRegistration(UserRequest userRequest)
         {
+            var filePath = "https://localhost:7194/Images/monkey-d-luffy-489x1024.png";
             userRequest.Type = Constants.TYPE_USER;
             if (!Constants.IsNullOrEmpty(userRequest).Status)
             {
@@ -102,11 +106,6 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "Please enter a valid phone number!", Code = 400 };
             }
-            if (string.IsNullOrEmpty(userRequest.Photo))
-            {
-                userRequest.Photo = Constants.TYPE_LOGO;
-            }
-
             if (_dbContext.Users.Any(x => x.Phone.Equals(userRequest.Phone)))
             {
                 return new OperationType() { Status = false, Message = "Phone Number already exists!", Code = 400 };
@@ -115,12 +114,26 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "the password must be at least 6 characters long!", Code = 400 };
             }
-
+            if (userRequest.Photo != null)
+            {
+                try
+                {
+                    string fName = userRequest.Photo.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        userRequest.Photo.CopyToAsync(stream);
+                    }
+                    filePath = "https://localhost:7194/Images/" + fName;
+                }
+                catch (Exception) { }
+            }
             var currentUser = _map.Map<User>(userRequest);
             byte[] hash, salt;
             Constants.GenerateHash(userRequest.Password, out hash, out salt);
             currentUser.PasswordHash = hash;
             currentUser.PasswordSalt = salt;
+            currentUser.Photo = filePath;
             currentUser.Token = GenerateToken(currentUser);
             _dbContext.Users.Add(currentUser);
             _dbContext.SaveChanges();
@@ -136,6 +149,7 @@ namespace Resturants.Repositories.other
 
         public OperationType VendorRegistration(VendorRequest vendorRequest)
         {
+            var filePath = "https://localhost:7194/Images/monkey-d-luffy-489x1024.png";
             vendorRequest.Type = Constants.TYPE_VENDOR;
             if (!Constants.IsNullOrEmpty(vendorRequest).Status)
             {
@@ -145,11 +159,6 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "Please enter a valid phone number!", Code = 400 };
             }
-            if (string.IsNullOrEmpty(vendorRequest.Photo))
-            {
-                vendorRequest.Photo = Constants.TYPE_LOGO;
-            }
-
             if (_dbContext.Users.Any(x => x.Phone.Equals(vendorRequest.Phone)))
             {
                 return new OperationType() { Status = false, Message = "Phone Number already exists!", Code = 400 };
@@ -158,12 +167,27 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "the password must be at least 6 characters long!", Code = 400 };
             }
+            if (vendorRequest.Photo != null)
+            {
+                try
+                {
+                    string fName = vendorRequest.Photo.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        vendorRequest.Photo.CopyToAsync(stream);
+                    }
+                    filePath = "https://localhost:7194/Images/" + fName;
+                }
+                catch (Exception) { }
+            }
 
             var currentUser = _map.Map<User>(vendorRequest);
             byte[] hash, salt;
             Constants.GenerateHash(vendorRequest.Password, out hash, out salt);
             currentUser.PasswordHash = hash;
             currentUser.PasswordSalt = salt;
+            currentUser.Photo = filePath;
             currentUser.Token = GenerateToken(currentUser);
             _dbContext.Users.Add(currentUser);
             _dbContext.SaveChanges();
@@ -249,10 +273,9 @@ namespace Resturants.Repositories.other
             foreach (var item in _dbContext.Users)
             {
                 _dbContext.Users.Remove(item);
-                //    _dbContext.Users.Cast<User>().ToList().Remove(item);    
             }
             _dbContext.SaveChanges();
-            return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = list } }; ;
+            return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = list } };
         }
 
         private string GenerateToken(User currentUser)

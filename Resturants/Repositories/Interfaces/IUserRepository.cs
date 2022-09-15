@@ -1,7 +1,5 @@
 ﻿using Resturants.DTO.Requests;
-using Resturants.DTO.Responses;
 using Resturants.Helper;
-using Resturants.Models;
 
 namespace Resturants.Repositories.Interfaces
 {

@@ -11,7 +11,7 @@ namespace Resturants.DTO.Requests
         public string Phone { get; set; } 
         public string Address { get; set; } 
         public string Password { get; set; }
-        public string Photo { get; set; }
+        public IFormFile Photo { get; set; }
         public string Type { get; set; }
         public string Description { get; set; } 
         public string WorkDays { get; set; } 
