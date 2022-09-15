@@ -233,7 +233,15 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
             }
-            var filePath = user.Photo;
+
+            var filePath = "";
+            if (string.IsNullOrEmpty(user.Photo))
+            {
+                filePath = "https://localhost:7194/Images/monkey-d-luffy-489x1024.png";
+            }
+            else {
+                filePath = user.Photo;
+            }
             if (userUpdate.Photo != null)
             {
                 try
@@ -249,11 +257,9 @@ namespace Resturants.Repositories.other
                 catch (Exception) { }
             }
 
-            user.Photo = filePath;
             var updateUser = _map.Map(userUpdate, user);
-         //   _dbContext.Users.Update(user);
+            user.Photo = filePath;
             _dbContext.SaveChanges();
-
             var currentUser = new object();
             if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
             else currentUser = _map.Map<VendorResponse>(user);
@@ -322,13 +328,13 @@ namespace Resturants.Repositories.other
             var toDelete = _dbContext.Users.ToList();
             _dbContext.Users.RemoveRange(toDelete);
             _dbContext.SaveChanges();
-/*
-            var list = _dbContext.Users.ToList();
-            foreach (var item in _dbContext.Users)
-            {
-                _dbContext.Users.Remove(item);
-            }
-            _dbContext.SaveChanges();*/
+            /*
+                        var list = _dbContext.Users.ToList();
+                        foreach (var item in _dbContext.Users)
+                        {
+                            _dbContext.Users.Remove(item);
+                        }
+                        _dbContext.SaveChanges();*/
             return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = toDelete } };
         }
 
