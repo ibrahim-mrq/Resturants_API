@@ -56,7 +56,7 @@ namespace Resturants.Controllers
         }
 
         [HttpPost("VendorRegister")]
-        public IActionResult VendorRegister(VendorRequest vendorRequest)
+        public IActionResult VendorRegister([FromForm] VendorRequest vendorRequest)
         {
             var respone = _userRepository.VendorRegistration(vendorRequest);
             if (!respone.Status)
@@ -66,8 +66,20 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
+
+        [HttpPost("UpdateUser/{Id}")]
+        public IActionResult UpdateUser([FromForm] int Id, UserUpdateRequest userUpdate)
+        {
+            var respone = _userRepository.UpdateUser(Id, userUpdate);
+            if (!respone.Status)
+            {
+                return BadRequest(respone);
+            }
+            return Ok(respone);
+        }
+
         [HttpPost("Login")]
-        public IActionResult Login([FromForm] UserLogin userLogin)
+        public IActionResult Login([FromForm] LoginRequest userLogin)
         {
             var respone = _userRepository.Login(userLogin);
             if (!respone.Status)

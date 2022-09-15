@@ -8,7 +8,7 @@ namespace Resturants.Repositories.Interfaces
         OperationType GetAllUsers();
         OperationType GetUsers();
         OperationType GetVendors();
-        OperationType Login(UserLogin userLogin);
+        OperationType Login(LoginRequest userLogin);
 
         OperationType UserRegistration(UserRequest userRequest);
         OperationType VendorRegistration(VendorRequest vendorRequest);
@@ -16,5 +16,6 @@ namespace Resturants.Repositories.Interfaces
         OperationType DeleteUser(int id);
         OperationType LoadProfile(int id, string token);
         OperationType UpdateVendor(int id, VendorRequest vendorRequest);
+        OperationType UpdateUser(int id, UserUpdateRequest userUpdate);
     }
 }

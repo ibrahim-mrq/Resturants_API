@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Resturants.DTO.Requests;
 using Resturants.DTO.Responses;
@@ -66,7 +67,7 @@ namespace Resturants.Repositories.other
             return result;
         }
 
-        public OperationType Login(UserLogin userLogin)
+        public OperationType Login(LoginRequest userLogin)
         {
             if (!Constants.IsNullOrEmpty(userLogin).Status)
             {
@@ -83,13 +84,16 @@ namespace Resturants.Repositories.other
                 return new OperationType() { Status = false, Message = "incorrect Password!", Code = 400 };
             }
             user.Token = GenerateToken(user);
-            var currentUser = _map.Map<UserResponse>(user);
+
+            var currentUser = new object();
+            if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
+            else currentUser = _map.Map<VendorResponse>(user);
             var response = new OperationType()
             {
                 Status = true,
                 Message = "Login successfully",
                 Code = 200,
-                Data = new { user = _map.Map<VendorResponse>(currentUser) }
+                Data = new { user = currentUser }
             };
             return response;
         }
@@ -214,6 +218,40 @@ namespace Resturants.Repositories.other
             {
                 Status = true,
                 Message = "Load User Profile successfully",
+                Code = 200,
+                Data = new { user = currentUser }
+            };
+            return response;
+        }
+
+        public OperationType UpdateUser(int Id, UserUpdateRequest userUpdate)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == Id && x.IsDelete== false).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            var filePath = user.Photo;
+            if (userUpdate.Photo != null)
+            {
+                try
+                {
+                    string fName = userUpdate.Photo.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        userUpdate.Photo.CopyToAsync(stream);
+                    }
+                    filePath = "https://localhost:7194/Images/" + fName;
+                }
+                catch (Exception) { }
+            }
+            var currentUser = _map.Map(userUpdate, user);
+            _dbContext.SaveChanges();
+            var response = new OperationType()
+            {
+                Status = true,
+                Message = "Update User successfully",
                 Code = 200,
                 Data = new { user = currentUser }
             };
