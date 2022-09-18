@@ -197,33 +197,6 @@ namespace Resturants.Repositories.other
             currentUser.Photo = filePath;
             currentUser.Token = GenerateToken(currentUser);
 
-            if (vendorRequest.AddressList != null)
-            {
-                foreach (var item in vendorRequest.AddressList)
-                {
-                    item.VendorId = currentUser.Id;
-                    _dbContext.Addresses.Add(item);
-                }
-            }
-
-            if (vendorRequest.PhotoList != null)
-            {
-                foreach (var item in vendorRequest.PhotoList)
-                {
-                    item.VendorId = currentUser.Id;
-                    _dbContext.Photos.Add(item);
-                }
-            }
-
-            if (vendorRequest.MenuList != null)
-            {
-                foreach (var item in vendorRequest.MenuList)
-                {
-                    item.VendorId = currentUser.Id;
-                    _dbContext.Menu.Add(item);
-                }
-            }
-
             _dbContext.Users.Add(currentUser);
             _dbContext.SaveChanges();
             var response = new OperationType()
@@ -393,16 +366,27 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
             }
-            var currentUser = new object();
-            if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
-            else currentUser = _map.Map<VendorResponse>(user);
-            var response = new OperationType()
+            var response = new OperationType();
+            response.Status = true;
+            response.Message = "Load User Profile successfully";
+            response.Code = 200;
+
+            if (user.Type.Equals(Constants.TYPE_USER))
             {
-                Status = true,
-                Message = "Load User Profile successfully",
-                Code = 200,
-                Data = new { user = currentUser }
-            };
+                var currentUser = _map.Map<UserResponse>(user);
+                response.Data = currentUser;
+            }
+            else
+            {
+                var currentVendor = _map.Map<VendorResponse>(user);
+                var addresse = _dbContext.Address.Where(x => x.VendorId == id).ToList();
+                var meun = _dbContext.Menu.Where(x => x.VendorId == id).ToList();
+                var photo = _dbContext.Photos.Where(x => x.VendorId == id).ToList();
+                currentVendor.AddressList = addresse;
+                currentVendor.MenuList = meun;
+                currentVendor.PhotoList= photo;
+                response.Data = currentVendor;
+            }
             return response;
         }
 
@@ -432,7 +416,7 @@ namespace Resturants.Repositories.other
         public OperationType ClearAllUser()
         {
             var users = _dbContext.Users.ToList();
-            var addresses = _dbContext.Addresses.ToList();
+            var addresses = _dbContext.Address.ToList();
             var menus = _dbContext.Menu.ToList();
             var photos = _dbContext.Photos.ToList();
             var tokens = _dbContext.Tokens.ToList();
@@ -440,7 +424,7 @@ namespace Resturants.Repositories.other
             _dbContext.Tokens.RemoveRange(tokens);
             _dbContext.Photos.RemoveRange(photos);
             _dbContext.Menu.RemoveRange(menus);
-            _dbContext.Addresses.RemoveRange(addresses);
+            _dbContext.Address.RemoveRange(addresses);
             _dbContext.Users.RemoveRange(users);
 
             _dbContext.SaveChanges();
