@@ -40,39 +40,7 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
-        [HttpPost("UserRegister")]
-        public IActionResult UserRegister([FromForm] UserRequest userRequest)
-        {
-            var respone = _userRepository.UserRegistration(userRequest);
-            if (!respone.Status)
-            {
-                return BadRequest(respone);
-            }
-            return Ok(respone);
-        }
 
-        [HttpPost("VendorRegister")]
-        public IActionResult VendorRegister([FromForm] VendorRequest vendorRequest)
-        {
-            var respone = _userRepository.VendorRegistration(vendorRequest);
-            if (!respone.Status)
-            {
-                return BadRequest(respone);
-            }
-            return Ok(respone);
-        }
-
-
-        [HttpPut("UpdateUser/{Id}")]
-        public IActionResult UpdateUser(int Id, [FromForm] UserUpdateRequest userUpdate)
-        {
-            var respone = _userRepository.UpdateUser(Id, userUpdate);
-            if (!respone.Status)
-            {
-                return BadRequest(respone);
-            }
-            return Ok(respone);
-        }
 
         [HttpPost("Login")]
         public IActionResult Login([FromForm] LoginRequest userLogin)
@@ -91,6 +59,56 @@ namespace Resturants.Controllers
             var respone = _userRepository.LoadProfile(Id, token);
             return Ok(respone);
         }
+
+
+
+        [HttpPost("UserRegister")]
+        public IActionResult UserRegister([FromForm] UserRequest userRequest)
+        {
+            var respone = _userRepository.UserRegistration(userRequest);
+            if (!respone.Status)
+            {
+                return BadRequest(respone);
+            }
+            return Ok(respone);
+        }
+
+        [HttpPost("VendorRegister")]
+        public IActionResult VendorRegister([FromBody] VendorRequest vendorRequest)
+        {
+            var respone = _userRepository.VendorRegistration(vendorRequest);
+            if (!respone.Status)
+            {
+                return BadRequest(respone);
+            }
+            return Ok(respone);
+        }
+
+
+
+        [HttpPut("UpdateUser/{Id}")]
+        public IActionResult UpdateUser(int Id, [FromHeader] string Token, [FromForm] UserUpdateRequest userUpdate)
+        {
+            var respone = _userRepository.UpdateUser(Id, Token, userUpdate);
+            if (!respone.Status)
+            {
+                return BadRequest(respone);
+            }
+            return Ok(respone);
+        }
+
+        [HttpPut("UpdateVendor/{Id}")]
+        public IActionResult UpdateVendor(int Id, [FromHeader] string Token, [FromForm] VendorUpdateRequest vendorUpdate)
+        {
+            var respone = _userRepository.UpdateVendor(Id, Token, vendorUpdate);
+            if (!respone.Status)
+            {
+                return BadRequest(respone);
+            }
+            return Ok(respone);
+        }
+
+
 
         [HttpDelete("DeleteUser/{Id}")]
         public IActionResult DeleteUser(int Id)

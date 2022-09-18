@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using Resturants.DTO.Requests;
 using Resturants.DTO.Responses;
 using Resturants.Helper;
@@ -28,14 +29,14 @@ namespace Resturants.Repositories.other
 
         public OperationType GetAllUsers()
         {
-            var users = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER));
-            var vendors = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_VENDOR));
+            var users = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER)).ToList();
+            var vendors = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_VENDOR)).ToList();
             var result = new OperationType()
             {
                 Status = true,
                 Code = 200,
                 Message = "success",
-                Data = new { users = users.ToList(), vendors = vendors }
+                Data = new { users = users, vendors = vendors }
             };
 
             return result;
@@ -195,6 +196,34 @@ namespace Resturants.Repositories.other
             currentUser.PasswordSalt = salt;
             currentUser.Photo = filePath;
             currentUser.Token = GenerateToken(currentUser);
+
+            if (vendorRequest.AddressList != null)
+            {
+                foreach (var item in vendorRequest.AddressList)
+                {
+                    item.VendorId = currentUser.Id;
+                    _dbContext.Addresses.Add(item);
+                }
+            }
+
+            if (vendorRequest.PhotoList != null)
+            {
+                foreach (var item in vendorRequest.PhotoList)
+                {
+                    item.VendorId = currentUser.Id;
+                    _dbContext.Photos.Add(item);
+                }
+            }
+
+            if (vendorRequest.MenuList != null)
+            {
+                foreach (var item in vendorRequest.MenuList)
+                {
+                    item.VendorId = currentUser.Id;
+                    _dbContext.Menu.Add(item);
+                }
+            }
+
             _dbContext.Users.Add(currentUser);
             _dbContext.SaveChanges();
             var response = new OperationType()
@@ -207,39 +236,117 @@ namespace Resturants.Repositories.other
             return response;
         }
 
-        public OperationType UpdateVendor(int id, VendorRequest vendorRequest)
+        public OperationType UpdateVendor(int Id, string Token, VendorUpdateRequest vendorUpdate)
         {
-            var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
             }
-            var currentUser = _map.Map(vendorRequest, user);
-            _dbContext.SaveChanges();
-            var response = new OperationType()
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
             {
-                Status = true,
-                Message = "Load User Profile successfully",
-                Code = 200,
-                Data = new { user = currentUser }
-            };
-            return response;
-        }
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
 
-        public OperationType UpdateUser(int Id, UserUpdateRequest userUpdate)
-        {
-            var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false).SingleOrDefault();
-            if (user == null)
+            if (string.IsNullOrEmpty(vendorUpdate.Name))
             {
-                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+                vendorUpdate.Name = user.Name;
             }
+            if (string.IsNullOrEmpty(vendorUpdate.Email))
+            {
+                vendorUpdate.Email = user.Email;
+            }
+            if (string.IsNullOrEmpty(vendorUpdate.Address))
+            {
+                vendorUpdate.Address = user.Address;
+            }
+            if (string.IsNullOrEmpty(vendorUpdate.Description))
+            {
+                vendorUpdate.Description = user.Description;
+            }
+            if (string.IsNullOrEmpty(vendorUpdate.WorkDays))
+            {
+                vendorUpdate.WorkDays = user.WorkDays;
+            }
+            if (string.IsNullOrEmpty(vendorUpdate.WorkHours))
+            {
+                vendorUpdate.WorkHours = user.WorkHours;
+            }
+            vendorUpdate.AddressList ??= user.AddressList;
+            vendorUpdate.PhotoList ??= user.PhotoList;
+            vendorUpdate.MenuList ??= user.MenuList;
+
 
             var filePath = "";
             if (string.IsNullOrEmpty(user.Photo))
             {
                 filePath = "https://localhost:7194/Images/monkey-d-luffy-489x1024.png";
             }
-            else {
+            else
+            {
+                filePath = user.Photo;
+            }
+            if (vendorUpdate.Photo != null)
+            {
+                try
+                {
+                    string fName = vendorUpdate.Photo.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    using (var stream = new FileStream(path, FileMode.Create))
+                    {
+                        vendorUpdate.Photo.CopyToAsync(stream);
+                    }
+                    filePath = "https://localhost:7194/Images/" + fName;
+                }
+                catch (Exception) { }
+            }
+
+            var updateUser = _map.Map(vendorUpdate, user);
+            user.Photo = filePath;
+            _dbContext.SaveChanges();
+            var response = new OperationType()
+            {
+                Status = true,
+                Message = "Update User successfully",
+                Code = 200,
+                Data = new { user = _map.Map<VendorResponse>(user) }
+            };
+            return response;
+        }
+
+        public OperationType UpdateUser(int Id, string Token, UserUpdateRequest userUpdate)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+
+            if (string.IsNullOrEmpty(userUpdate.Name))
+            {
+                userUpdate.Name = user.Name;
+            }
+            if (string.IsNullOrEmpty(userUpdate.Email))
+            {
+                userUpdate.Email = user.Email;
+            }
+            if (string.IsNullOrEmpty(userUpdate.Address))
+            {
+                userUpdate.Address = user.Address;
+            }
+
+
+            var filePath = "";
+            if (string.IsNullOrEmpty(user.Photo))
+            {
+                filePath = "https://localhost:7194/Images/monkey-d-luffy-489x1024.png";
+            }
+            else
+            {
                 filePath = user.Photo;
             }
             if (userUpdate.Photo != null)
@@ -260,22 +367,23 @@ namespace Resturants.Repositories.other
             var updateUser = _map.Map(userUpdate, user);
             user.Photo = filePath;
             _dbContext.SaveChanges();
-            var currentUser = new object();
-            if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
-            else currentUser = _map.Map<VendorResponse>(user);
-
             var response = new OperationType()
             {
                 Status = true,
                 Message = "Update User successfully",
                 Code = 200,
-                Data = new { user = currentUser }
+                Data = new { user = _map.Map<UserResponse>(user) }
             };
             return response;
         }
 
         public OperationType LoadProfile(int id, string token)
         {
+            /*            var to = _dbContext.Tokens.Where(x => x.Token != token && x.UserId != Id && x.Expires > DateTime.Now).SingleOrDefault();
+                        if (string.IsNullOrEmpty(token))
+                        {
+                            return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+                        }*/
             var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
             if (user == null)
             {
@@ -323,19 +431,27 @@ namespace Resturants.Repositories.other
 
         public OperationType ClearAllUser()
         {
+            var users = _dbContext.Users.ToList();
+            var addresses = _dbContext.Addresses.ToList();
+            var menus = _dbContext.Menu.ToList();
+            var photos = _dbContext.Photos.ToList();
+            var tokens = _dbContext.Tokens.ToList();
 
+            _dbContext.Tokens.RemoveRange(tokens);
+            _dbContext.Photos.RemoveRange(photos);
+            _dbContext.Menu.RemoveRange(menus);
+            _dbContext.Addresses.RemoveRange(addresses);
+            _dbContext.Users.RemoveRange(users);
 
-            var toDelete = _dbContext.Users.ToList();
-            _dbContext.Users.RemoveRange(toDelete);
             _dbContext.SaveChanges();
-            /*
-                        var list = _dbContext.Users.ToList();
-                        foreach (var item in _dbContext.Users)
-                        {
-                            _dbContext.Users.Remove(item);
-                        }
-                        _dbContext.SaveChanges();*/
-            return new OperationType() { Status = true, Message = "All users have been successfully deleted!", Code = 200, Data = new { users = toDelete } };
+
+            return new OperationType()
+            {
+                Status = true,
+                Message = "All users have been successfully deleted!",
+                Code = 200,
+                Data = new { users = users }
+            };
         }
 
         private string GenerateToken(User currentUser)
