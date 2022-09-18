@@ -27,6 +27,9 @@ namespace Resturants.Repositories.other
             this._environment = environment;
         }
 
+
+
+
         public OperationType GetAllUsers()
         {
             var users = _dbContext.Users.Where(x => x.Type.Equals(Constants.TYPE_USER)).ToList();
@@ -68,6 +71,9 @@ namespace Resturants.Repositories.other
             return result;
         }
 
+
+
+
         public OperationType Login(LoginRequest userLogin)
         {
             if (!Constants.IsNullOrEmpty(userLogin).Status)
@@ -88,18 +94,58 @@ namespace Resturants.Repositories.other
             _dbContext.Users.Update(user);
             _dbContext.SaveChanges();
 
-            var currentUser = new object();
-            if (user.Type.Equals(Constants.TYPE_USER)) currentUser = _map.Map<UserResponse>(user);
-            else currentUser = _map.Map<VendorResponse>(user);
-            var response = new OperationType()
+            var response = new OperationType();
+            response.Status = true;
+            response.Message = "Load User Profile successfully";
+            response.Code = 200;
+
+            if (user.Type.Equals(Constants.TYPE_USER))
             {
-                Status = true,
-                Message = "Login successfully",
-                Code = 200,
-                Data = new { user = currentUser }
-            };
+                var currentUser = _map.Map<UserResponse>(user);
+                response.Data = currentUser;
+            }
+            else
+            {
+                var currentVendor = _map.Map<VendorResponse>(user);
+                InitVenderData(currentVendor, user.Id);
+                response.Data = new { user = currentVendor };
+            }
+            return response;
+
+        }
+
+        public OperationType LoadProfile(int Id, string token)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(token) || user.Token != token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var response = new OperationType();
+            response.Status = true;
+            response.Message = "Load User Profile successfully";
+            response.Code = 200;
+
+            if (user.Type.Equals(Constants.TYPE_USER))
+            {
+                var currentUser = _map.Map<UserResponse>(user);
+                response.Data = new { user = currentUser };
+            }
+            else
+            {
+                var currentVendor = _map.Map<VendorResponse>(user);
+                InitVenderData(currentVendor, Id);
+                response.Data = new { user = currentVendor };
+            }
             return response;
         }
+
+
+
 
         public OperationType UserRegistration(UserRequest userRequest)
         {
@@ -209,6 +255,9 @@ namespace Resturants.Repositories.other
             return response;
         }
 
+
+
+
         public OperationType UpdateVendor(int Id, string Token, VendorUpdateRequest vendorUpdate)
         {
             var user = _dbContext.Users.Where(x => x.Id.Equals(Id) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
@@ -245,10 +294,33 @@ namespace Resturants.Repositories.other
             {
                 vendorUpdate.WorkHours = user.WorkHours;
             }
-            vendorUpdate.AddressList ??= user.AddressList;
-            vendorUpdate.PhotoList ??= user.PhotoList;
-            vendorUpdate.MenuList ??= user.MenuList;
 
+            if (vendorUpdate.AddressList != null)
+            {
+                foreach (var item in vendorUpdate.AddressList)
+                {
+                    user.AddressList.Add(item);
+                }
+            }
+            else vendorUpdate.AddressList = user.AddressList;
+
+            if (vendorUpdate.PhotoList != null)
+            {
+                foreach (var item in vendorUpdate.PhotoList)
+                {
+                    user.PhotoList.Add(item);
+                }
+            }
+            else vendorUpdate.PhotoList = user.PhotoList;
+
+            if (vendorUpdate.MenuList != null)
+            {
+                foreach (var item in vendorUpdate.MenuList)
+                {
+                    user.MenuList.Add(item);
+                }
+            }
+            else vendorUpdate.MenuList = user.MenuList;
 
             var filePath = "";
             if (string.IsNullOrEmpty(user.Photo))
@@ -277,6 +349,8 @@ namespace Resturants.Repositories.other
             var updateUser = _map.Map(vendorUpdate, user);
             user.Photo = filePath;
             _dbContext.SaveChanges();
+            var vendorResponse = _map.Map<VendorResponse>(user);
+            InitVenderData(vendorResponse, Id);
             var response = new OperationType()
             {
                 Status = true,
@@ -350,45 +424,40 @@ namespace Resturants.Repositories.other
             return response;
         }
 
-        public OperationType LoadProfile(int id, string token)
+
+
+
+        public OperationType RemoveAddress(int UserId, int AddressId, string Token)
         {
-            /*            var to = _dbContext.Tokens.Where(x => x.Token != token && x.UserId != Id && x.Expires > DateTime.Now).SingleOrDefault();
-                        if (string.IsNullOrEmpty(token))
-                        {
-                            return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
-                        }*/
-            var user = _dbContext.Users.Where(x => x.Id.Equals(id) && x.IsDelete == false).SingleOrDefault();
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
             if (user == null)
             {
                 return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
             }
-            if (string.IsNullOrEmpty(token) || user.Token != token)
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
             {
                 return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
             }
-            var response = new OperationType();
-            response.Status = true;
-            response.Message = "Load User Profile successfully";
-            response.Code = 200;
-
-            if (user.Type.Equals(Constants.TYPE_USER))
+            var address = _dbContext.Address.Where(x => x.Id.Equals(AddressId) && x.UserId == UserId).SingleOrDefault();
+            if (address == null)
             {
-                var currentUser = _map.Map<UserResponse>(user);
-                response.Data = currentUser;
+                return new OperationType() { Status = false, Message = "Address Id not exists!", Code = 400 };
             }
-            else
+            _dbContext.Address.Remove(address);
+            _dbContext.SaveChanges();
+            var response = new OperationType()
             {
-                var currentVendor = _map.Map<VendorResponse>(user);
-                var addresse = _dbContext.Address.Where(x => x.VendorId == id).ToList();
-                var meun = _dbContext.Menu.Where(x => x.VendorId == id).ToList();
-                var photo = _dbContext.Photos.Where(x => x.VendorId == id).ToList();
-                currentVendor.AddressList = addresse;
-                currentVendor.MenuList = meun;
-                currentVendor.PhotoList= photo;
-                response.Data = currentVendor;
-            }
+                Status = true,
+                Code = 200,
+                Message = "User Deleted successfully",
+                Data = new { }
+            };
             return response;
         }
+
+
+
+
 
         public OperationType DeleteUser(int id)
         {
@@ -438,6 +507,9 @@ namespace Resturants.Repositories.other
             };
         }
 
+
+
+
         private string GenerateToken(User currentUser)
         {
             var keyByte = Encoding.ASCII.GetBytes("LZImjD2eUbUxhxjIdyOJuYT4FjWhKSJy");
@@ -459,6 +531,15 @@ namespace Resturants.Repositories.other
             return handler.WriteToken(token);
         }
 
+        private void InitVenderData(VendorResponse vendorResponse, int Id)
+        {
+            var addresse = _dbContext.Address.Where(x => x.UserId == Id).ToList();
+            var meun = _dbContext.Menu.Where(x => x.UserId == Id).ToList();
+            var photo = _dbContext.Photos.Where(x => x.UserId == Id).ToList();
+            vendorResponse.AddressList = addresse;
+            vendorResponse.MenuList = meun;
+            vendorResponse.PhotoList = photo;
+        }
 
     }
 }

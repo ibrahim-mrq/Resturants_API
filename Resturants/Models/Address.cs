@@ -8,6 +8,6 @@ namespace Resturants.Models
         public int Id { get; set; }
         public string Title { get; set; }
         public string Phone { get; set; }
-        public int VendorId { get; set; }
+        public int UserId { get; set; }
     }
 }

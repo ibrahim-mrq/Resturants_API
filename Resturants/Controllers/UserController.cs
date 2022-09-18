@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using Resturants.DTO.Requests;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
@@ -57,6 +58,10 @@ namespace Resturants.Controllers
         public IActionResult LoadProfile(int Id, [FromHeader] string token)
         {
             var respone = _userRepository.LoadProfile(Id, token);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
             return Ok(respone);
         }
 
@@ -90,21 +95,34 @@ namespace Resturants.Controllers
         public IActionResult UpdateUser(int Id, [FromHeader] string Token, [FromForm] UserUpdateRequest userUpdate)
         {
             var respone = _userRepository.UpdateUser(Id, Token, userUpdate);
-            if (!respone.Status)
-            {
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
                 return BadRequest(respone);
-            }
             return Ok(respone);
         }
 
         [HttpPut("UpdateVendor/{Id}")]
-        public IActionResult UpdateVendor(int Id, [FromHeader] string Token, [FromForm] VendorUpdateRequest vendorUpdate)
+        public IActionResult UpdateVendor(int Id, [FromHeader] string Token, VendorUpdateRequest vendorUpdate)
         {
             var respone = _userRepository.UpdateVendor(Id, Token, vendorUpdate);
-            if (!respone.Status)
-            {
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
                 return BadRequest(respone);
-            }
+            return Ok(respone);
+        }
+
+
+
+        [HttpDelete("RemoveAddress")]
+        public IActionResult RemoveAddress(int UserId, int AddressId, [FromHeader] string Token)
+        {
+            var respone = _userRepository.RemoveAddress(UserId, AddressId, Token);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
             return Ok(respone);
         }
 
@@ -117,8 +135,8 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
-        [HttpDelete("Delete")]
-        public IActionResult Delete()
+        [HttpDelete("ClearAllData")]
+        public IActionResult ClearAllData()
         {
             var respone = _userRepository.ClearAllUser();
             return Ok(respone);
