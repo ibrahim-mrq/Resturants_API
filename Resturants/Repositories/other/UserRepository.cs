@@ -7,9 +7,11 @@ using Resturants.DTO.Responses;
 using Resturants.Helper;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Xml.Linq;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Repositories.other
@@ -427,6 +429,125 @@ namespace Resturants.Repositories.other
 
 
 
+        public OperationType AddAddress(int UserId, string Token, List<AddressRequest> addressRequest)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == UserId && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400, };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+
+            foreach (var item in addressRequest)
+            {
+                var currentAddress = _map.Map<Address>(item);
+                currentAddress.UserId = UserId;
+                _dbContext.Address.Add(currentAddress);
+                _dbContext.SaveChanges();
+            }
+            var response = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Address Added successfully",
+                Data = new { addresses = addressRequest }
+            };
+            return response;
+        }
+
+        public OperationType AddMenu(int UserId, string Token, List<MenuRequest> menuRequest)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == UserId && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400, };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+
+            foreach (var item in menuRequest)
+            {
+                var currentMenu = _map.Map<Menu>(item);
+                if (item.Photo != null)
+                {
+                    string fName = item.Photo.FileName;
+                    string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                    var stream = new FileStream(path, FileMode.Create);
+                    item.Photo.CopyToAsync(stream);
+                    currentMenu.Photo = Constants.TYPE_LOCAL_URL + fName;
+                }
+                else
+                {
+                    currentMenu.Photo = Constants.TYPE_LOGO;
+                }
+                currentMenu.UserId = UserId;
+
+                _dbContext.Menu.Add(currentMenu);
+                _dbContext.SaveChanges();
+            }
+            var response = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Menu Added successfully",
+            };
+            return response;
+        }
+
+        public OperationType AddPhoto(int UserId, string Token, List<PhotoRequest> photoRequest)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == UserId && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400, };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+
+            if (photoRequest != null)
+            {
+                foreach (var item in photoRequest)
+                {
+                    var currentPhoto = _map.Map<Photo>(item);
+                    if (item.Photo != null)
+                    {
+                        string fName = item.Photo.FileName;
+                        string path = Path.Combine(_environment.ContentRootPath, "Images", fName);
+                        using var stream = new FileStream(path, FileMode.Create);
+                        item.Photo.CopyToAsync(stream);
+                        currentPhoto.Path = Constants.TYPE_LOCAL_URL + fName;
+                    }
+                    else currentPhoto.Path = Constants.TYPE_LOGO;
+
+                    currentPhoto.UserId = UserId;
+                    _dbContext.Photos.Add(currentPhoto);
+                    _dbContext.SaveChanges();
+
+                }
+            }
+            else
+            {
+                return new OperationType() { Status = false, Message = "file must not empty or null!", Code = 400 };
+            }
+
+            var response = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Photos Photos successfully",
+            };
+            return response;
+        }
+
+
+
         public OperationType RemoveAddress(int UserId, int AddressId, string Token)
         {
             var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
@@ -449,12 +570,64 @@ namespace Resturants.Repositories.other
             {
                 Status = true,
                 Code = 200,
-                Message = "User Deleted successfully",
-                Data = new { }
+                Message = "Address Deleted successfully",
             };
             return response;
         }
 
+        public OperationType RemovePhoto(int UserId, int PhotoId, string Token)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var photo = _dbContext.Photos.Where(x => x.Id.Equals(PhotoId) && x.UserId == UserId).SingleOrDefault();
+            if (photo == null)
+            {
+                return new OperationType() { Status = false, Message = "Photo Id not exists!", Code = 400 };
+            }
+            _dbContext.Photos.Remove(photo);
+            _dbContext.SaveChanges();
+            var response = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Photo Deleted successfully",
+            };
+            return response;
+        }
+
+        public OperationType RemoveMenu(int UserId, int MenuId, string Token)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var menu = _dbContext.Menu.Where(x => x.Id.Equals(MenuId) && x.UserId == UserId).SingleOrDefault();
+            if (menu == null)
+            {
+                return new OperationType() { Status = false, Message = "Menu Id not exists!", Code = 400 };
+            }
+            _dbContext.Menu.Remove(menu);
+            _dbContext.SaveChanges();
+            var response = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Menu Deleted successfully",
+            };
+            return response;
+        }
 
 
 

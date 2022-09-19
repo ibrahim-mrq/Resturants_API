@@ -16,8 +16,13 @@ namespace Resturants.Helper
             CreateMap<UserUpdateRequest, User>();
             CreateMap<VendorUpdateRequest, User>();
 
-            CreateMap<UserRequest, User>().ForMember(opt => opt.IsDelete, opt => opt.MapFrom(src => false));
-            CreateMap<VendorRequest, User>().ForMember(opt => opt.IsDelete, opt => opt.MapFrom(src => false));
+            CreateMap<UserRequest, User>();
+            CreateMap<VendorRequest, User>();
+
+
+            CreateMap<AddressRequest, Address>();
+            CreateMap<MenuRequest, Menu>();
+            CreateMap<PhotoRequest, Photo>();
 
         }
     }

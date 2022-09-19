@@ -7,6 +7,7 @@ namespace Resturants.Helper
         public static string TYPE_USER = "User";
         public static string TYPE_VENDOR = "Vendor";
         public static string TYPE_LOGO = "https://www.wepal.net/ar/uploads/2732018-073911PM-1.jpg";
+        public static string TYPE_LOCAL_URL = "https://localhost:7194/Images/";
 
 
         public static void GenerateHash(String password, out byte[] passwordHash, out byte[] passwordSalt)

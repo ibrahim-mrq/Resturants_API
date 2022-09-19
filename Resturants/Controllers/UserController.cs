@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Resturants.DTO.Requests;
+using Resturants.Helper;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
+using System.Reflection.Metadata;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Controllers
@@ -19,6 +21,8 @@ namespace Resturants.Controllers
             this._userRepository = userRepository;
             this._environment = environment;
         }
+
+
 
         [HttpGet]
         public IActionResult GetAllUsers()
@@ -40,6 +44,7 @@ namespace Resturants.Controllers
             var respone = _userRepository.GetVendors();
             return Ok(respone);
         }
+
 
 
 
@@ -67,6 +72,7 @@ namespace Resturants.Controllers
 
 
 
+
         [HttpPost("UserRegister")]
         public IActionResult UserRegister([FromForm] UserRequest userRequest)
         {
@@ -91,6 +97,7 @@ namespace Resturants.Controllers
 
 
 
+
         [HttpPut("UpdateUser/{Id}")]
         public IActionResult UpdateUser(int Id, [FromHeader] string Token, [FromForm] UserUpdateRequest userUpdate)
         {
@@ -103,7 +110,7 @@ namespace Resturants.Controllers
         }
 
         [HttpPut("UpdateVendor/{Id}")]
-        public IActionResult UpdateVendor(int Id, [FromHeader] string Token, VendorUpdateRequest vendorUpdate)
+        public IActionResult UpdateVendor(int Id, [FromHeader] string Token, [FromForm][FromBody] VendorUpdateRequest vendorUpdate)
         {
             var respone = _userRepository.UpdateVendor(Id, Token, vendorUpdate);
             if (respone.Code == 401)
@@ -112,6 +119,42 @@ namespace Resturants.Controllers
                 return BadRequest(respone);
             return Ok(respone);
         }
+
+
+
+
+        [HttpPost("AddAddress/{UserId}")]
+        public IActionResult AddAddress(int UserId, [FromHeader] string Token, [FromBody] List<AddressRequest> addressRequest)
+        {
+            var respone = _userRepository.AddAddress(UserId, Token, addressRequest);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
+        [HttpPost("AddMenu/{UserId}")]
+        public IActionResult AddMenu(int UserId, [FromHeader] string Token, [FromBody] List<MenuRequest> menuRequest)
+        {
+            var respone = _userRepository.AddMenu(UserId, Token, menuRequest);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+        [HttpPost("AddPhoto/{UserId}")]
+        public IActionResult AddPhoto(int UserId, [FromHeader] string Token, [FromBody] List<PhotoRequest> photoRequest)
+        {
+            var respone = _userRepository.AddPhoto(UserId, Token, photoRequest);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
 
 
 
@@ -125,6 +168,30 @@ namespace Resturants.Controllers
                 return BadRequest(respone);
             return Ok(respone);
         }
+
+        [HttpDelete("RemovePhoto")]
+        public IActionResult RemovePhoto(int UserId, int PhotoId, [FromHeader] string Token)
+        {
+            var respone = _userRepository.RemovePhoto(UserId, PhotoId, Token);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
+        [HttpDelete("RemoveMenu")]
+        public IActionResult RemoveMenu(int UserId, int MenuId, [FromHeader] string Token)
+        {
+            var respone = _userRepository.RemoveMenu(UserId, MenuId, Token);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
+
 
 
 
@@ -156,7 +223,7 @@ namespace Resturants.Controllers
                     {
                         await file.CopyToAsync(stream);
                     }
-                    return Ok(new { status = true, url = "https://localhost:7194/Images/" + fName, coed = 200 });
+                    return Ok(new { status = true, url = Constants.TYPE_LOCAL_URL + fName, coed = 200 });
                 }
                 catch (Exception exception)
                 {

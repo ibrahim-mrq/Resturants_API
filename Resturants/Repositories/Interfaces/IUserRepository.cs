@@ -12,7 +12,7 @@ namespace Resturants.Repositories.Interfaces
 
         OperationType Login(LoginRequest userLogin);
         OperationType LoadProfile(int Id, string token);
-        
+
 
         OperationType UserRegistration(UserRequest userRequest);
         OperationType VendorRegistration(VendorRequest vendorRequest);
@@ -22,12 +22,18 @@ namespace Resturants.Repositories.Interfaces
         OperationType UpdateUser(int Id, string Token, UserUpdateRequest userUpdate);
 
 
+        OperationType AddAddress(int UserId, string Token, List<AddressRequest> addressRequest);
+        OperationType AddMenu(int UserId, string Token, List<MenuRequest> menuRequest);
+        OperationType AddPhoto(int UserId, string Token, List<PhotoRequest> photoRequest);
+
+
         OperationType RemoveAddress(int UserId, int AddressId, string Token);
+        OperationType RemovePhoto(int UserId, int PhotoId, string Token);
+        OperationType RemoveMenu(int UserId, int MenuId, string Token);
 
 
         OperationType ClearAllUser();
         OperationType DeleteUser(int Id);
-
 
     }
 }
