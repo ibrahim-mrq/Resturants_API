@@ -16,7 +16,7 @@ namespace Resturants.Models
             WorkHours = "";
             AddressList = new List<Address>();
             PhotoList = new List<Photo>();
-            MenuList = new List<Menu>();
+            ProductList = new List<Product>();
 
         }
 
@@ -40,7 +40,7 @@ namespace Resturants.Models
 
         public List<Address> AddressList { get; set; }
         public List<Photo> PhotoList { get; set; } 
-        public List<Menu> MenuList { get; set; } 
+        public List<Product> ProductList { get; set; } 
 
 
     }

@@ -18,7 +18,7 @@ namespace Resturants.DTO.Requests
         public string WorkHours { get; set; }
         public List<Address> AddressList { get; set; }
         public List<Photo> PhotoList { get; set; }
-        public List<Menu> MenuList { get; set; }
+        public List<Product> ProductList { get; set; }
 
 
     }

@@ -71,6 +71,7 @@ void JwtBearer(WebApplicationBuilder builder)
 void AddScoped(WebApplicationBuilder builder)
 {
     builder.Services.AddScoped<IUserRepository, UserRepository>();
+    builder.Services.AddScoped<ICartRepository, CartRepository>();
 }
 
 void AddAutoMapper(WebApplicationBuilder builder)

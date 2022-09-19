@@ -1,20 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Resturants.Models
+namespace Resturants.DTO.Responses
 {
-    public class Cart
+    public class CartResponse
     {
 
-        [Key]
         public int Id { get; set; }
-        public int UserId { get; set; }
         public int ProductId { get; set; }
         public int Quantity { get; set; }
         public float Price { get; set; }
         public string ProductName { get; set; }
         public string ProductDescription { get; set; }
         public string ProductPhoto { get; set; }
-
 
     }
 }

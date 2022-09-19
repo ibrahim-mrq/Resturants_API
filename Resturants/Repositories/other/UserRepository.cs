@@ -315,14 +315,14 @@ namespace Resturants.Repositories.other
             }
             else vendorUpdate.PhotoList = user.PhotoList;
 
-            if (vendorUpdate.MenuList != null)
+            if (vendorUpdate.ProductList != null)
             {
-                foreach (var item in vendorUpdate.MenuList)
+                foreach (var item in vendorUpdate.ProductList)
                 {
-                    user.MenuList.Add(item);
+                    user.ProductList.Add(item);
                 }
             }
-            else vendorUpdate.MenuList = user.MenuList;
+            else vendorUpdate.ProductList = user.ProductList;
 
             var filePath = "";
             if (string.IsNullOrEmpty(user.Photo))
@@ -458,7 +458,7 @@ namespace Resturants.Repositories.other
             return response;
         }
 
-        public OperationType AddMenu(int UserId, string Token, List<MenuRequest> menuRequest)
+        public OperationType AddProduct(int UserId, string Token, List<ProductRequest> productRequests)
         {
             var user = _dbContext.Users.Where(x => x.Id == UserId && x.IsDelete == false && x.Type == Constants.TYPE_VENDOR).SingleOrDefault();
             if (user == null)
@@ -470,9 +470,9 @@ namespace Resturants.Repositories.other
                 return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
             }
 
-            foreach (var item in menuRequest)
+            foreach (var item in productRequests)
             {
-                var currentMenu = _map.Map<Menu>(item);
+                var currentMenu = _map.Map<Product>(item);
                 if (item.Photo != null)
                 {
                     string fName = item.Photo.FileName;
@@ -487,14 +487,15 @@ namespace Resturants.Repositories.other
                 }
                 currentMenu.UserId = UserId;
 
-                _dbContext.Menu.Add(currentMenu);
+                _dbContext.Products.Add(currentMenu);
                 _dbContext.SaveChanges();
             }
             var response = new OperationType()
             {
                 Status = true,
                 Code = 200,
-                Message = "Menu Added successfully",
+                Message = "Products Added successfully",
+                Data = new { products = _dbContext.Products.Where(x => x.UserId == UserId).ToList() }
             };
             return response;
         }
@@ -613,12 +614,12 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
             }
-            var menu = _dbContext.Menu.Where(x => x.Id.Equals(MenuId) && x.UserId == UserId).SingleOrDefault();
+            var menu = _dbContext.Products.Where(x => x.Id.Equals(MenuId) && x.UserId == UserId).SingleOrDefault();
             if (menu == null)
             {
                 return new OperationType() { Status = false, Message = "Menu Id not exists!", Code = 400 };
             }
-            _dbContext.Menu.Remove(menu);
+            _dbContext.Products.Remove(menu);
             _dbContext.SaveChanges();
             var response = new OperationType()
             {
@@ -659,13 +660,13 @@ namespace Resturants.Repositories.other
         {
             var users = _dbContext.Users.ToList();
             var addresses = _dbContext.Address.ToList();
-            var menus = _dbContext.Menu.ToList();
+            var products = _dbContext.Products.ToList();
             var photos = _dbContext.Photos.ToList();
             var tokens = _dbContext.Tokens.ToList();
 
             _dbContext.Tokens.RemoveRange(tokens);
             _dbContext.Photos.RemoveRange(photos);
-            _dbContext.Menu.RemoveRange(menus);
+            _dbContext.Products.RemoveRange(products);
             _dbContext.Address.RemoveRange(addresses);
             _dbContext.Users.RemoveRange(users);
 
@@ -707,10 +708,10 @@ namespace Resturants.Repositories.other
         private void InitVenderData(VendorResponse vendorResponse, int Id)
         {
             var addresse = _dbContext.Address.Where(x => x.UserId == Id).ToList();
-            var meun = _dbContext.Menu.Where(x => x.UserId == Id).ToList();
+            var products = _dbContext.Products.Where(x => x.UserId == Id).ToList();
             var photo = _dbContext.Photos.Where(x => x.UserId == Id).ToList();
             vendorResponse.AddressList = addresse;
-            vendorResponse.MenuList = meun;
+            vendorResponse.ProductList = products;
             vendorResponse.PhotoList = photo;
         }
 

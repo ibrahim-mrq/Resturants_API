@@ -1,16 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Resturants.Models
+namespace Resturants.DTO.Requests
 {
-    public class Menu
+    public class ProductRequest
     {
 
-        [Key]
-        public int Id { get; set; }
         public string Name { get; set; }
         public float Price { get; set; }
         public string Description { get; set; }
-        public string Photo { get; set; }
-        public int UserId { get; set; }
+        public IFormFile Photo { get; set; }
+
     }
 }

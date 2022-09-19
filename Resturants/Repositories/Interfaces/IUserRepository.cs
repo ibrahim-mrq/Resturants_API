@@ -23,7 +23,7 @@ namespace Resturants.Repositories.Interfaces
 
 
         OperationType AddAddress(int UserId, string Token, List<AddressRequest> addressRequest);
-        OperationType AddMenu(int UserId, string Token, List<MenuRequest> menuRequest);
+        OperationType AddProduct(int UserId, string Token, List<ProductRequest> productRequest);
         OperationType AddPhoto(int UserId, string Token, List<PhotoRequest> photoRequest);
 
 

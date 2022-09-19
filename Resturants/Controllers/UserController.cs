@@ -1,10 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using Resturants.DTO.Requests;
 using Resturants.Helper;
-using Resturants.Models;
 using Resturants.Repositories.Interfaces;
-using System.Reflection.Metadata;
 using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Controllers
@@ -134,10 +131,10 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
-        [HttpPost("AddMenu/{UserId}")]
-        public IActionResult AddMenu(int UserId, [FromHeader] string Token, [FromBody] List<MenuRequest> menuRequest)
+        [HttpPost("AddProduct/{UserId}")]
+        public IActionResult AddProduct(int UserId, [FromHeader] string Token, [FromBody] List<ProductRequest> productRequests)
         {
-            var respone = _userRepository.AddMenu(UserId, Token, menuRequest);
+            var respone = _userRepository.AddProduct(UserId, Token, productRequests);
             if (respone.Code == 401)
                 return Unauthorized(respone);
             if (respone.Code == 400)

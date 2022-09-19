@@ -21,8 +21,12 @@ namespace Resturants.Helper
 
 
             CreateMap<AddressRequest, Address>();
-            CreateMap<MenuRequest, Menu>();
+            CreateMap<ProductRequest, Product>();
             CreateMap<PhotoRequest, Photo>();
+
+
+            CreateMap<Cart, CartResponse>();
+            CreateMap<CartRequest, Cart>();
 
         }
     }
