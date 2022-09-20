@@ -29,8 +29,7 @@ namespace Resturants.Repositories.other
 
 
 
-
-        public OperationType GetCart(int UserId, string Token)
+        public OperationType GetCart(string Token, int UserId)
         {
             var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
             if (user == null)
@@ -46,8 +45,8 @@ namespace Resturants.Repositories.other
             foreach (var item in list)
             {
                 totlePrice += item.Quantity * item.Price;
-                // totlePrice = totlePrice + item.Price * list.Count();
             }
+            totlePrice = Math.Round(totlePrice, 2);
 
             var result = new OperationType()
             {
@@ -57,15 +56,15 @@ namespace Resturants.Repositories.other
                 Data = new
                 {
                     carts = list,
-                    totlePrice = totlePrice,
-                    totleProduct = list.Count(),
+                    totlePrice,
+                    totleProduct = list.Count,
 
                 }
             };
             return result;
         }
 
-        public OperationType AddToCart(int UserId, string Token, CartRequest CartRequest)
+        public OperationType AddToCart(string Token, int UserId, CartRequest CartRequest)
         {
             var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
             if (user == null)
@@ -113,5 +112,63 @@ namespace Resturants.Repositories.other
             result.Data = new { carts = _map.Map<CartResponse>(carts) };
             return result;
         }
+
+        public OperationType RemoveFromCart(string Token, int UserId, int CartId)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var cart = _dbContext.Carts.Where(x => x.Id.Equals(CartId)).SingleOrDefault();
+            if (cart == null)
+            {
+                return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
+            }
+            _dbContext.Carts.Remove(cart);
+            _dbContext.SaveChanges();
+            var result = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Product removed form cart success!",
+                Data = new { carts = _map.Map<CartResponse>(cart) }
+            };
+            return result;
+        }
+
+        public OperationType UpdateProductInCart(string Token, int UserId, int CartId, int Quantity)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var cart = _dbContext.Carts.Where(x => x.Id.Equals(CartId)).SingleOrDefault();
+            if (cart == null)
+            {
+                return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
+            }
+            cart.Quantity = Quantity;
+            _dbContext.Carts.Update(cart);
+            _dbContext.SaveChanges();
+            var result = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Update Product in cart success!",
+                Data = new { carts = _map.Map<CartResponse>(cart) }
+            };
+            return result;
+        }
+
     }
 }

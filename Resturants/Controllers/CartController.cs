@@ -21,9 +21,9 @@ namespace Resturants.Controllers
 
 
         [HttpGet("{UserId}")]
-        public IActionResult GetCart(int UserId, [FromHeader] string Token)
+        public IActionResult GetCart([FromHeader] string Token, int UserId)
         {
-            var respone = _cartRepository.GetCart(UserId, Token);
+            var respone = _cartRepository.GetCart(Token, UserId);
             if (respone.Code == 401)
                 return Unauthorized(respone);
             if (respone.Code == 400)
@@ -31,15 +31,41 @@ namespace Resturants.Controllers
             return Ok(respone);
         }
 
+
         [HttpPost("AddToCart/{UserId}")]
-        public IActionResult AddToCart(int UserId, [FromHeader] string Token, [FromForm] CartRequest CartRequest)
+        public IActionResult AddToCart([FromHeader] string Token, int UserId, [FromForm] CartRequest CartRequest)
         {
-            var respone = _cartRepository.AddToCart(UserId, Token, CartRequest);
+            var respone = _cartRepository.AddToCart(Token, UserId, CartRequest);
             if (respone.Code == 401)
                 return Unauthorized(respone);
             if (respone.Code == 400)
                 return BadRequest(respone);
             return Ok(respone);
         }
+
+
+        [HttpDelete("RemoveFromCart/{UserId}")]
+        public IActionResult RemoveFromCart([FromHeader] string Token, int UserId, [FromQuery] int CartId)
+        {
+            var respone = _cartRepository.RemoveFromCart(Token, UserId, CartId);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
+        [HttpPut("UpdateProductInCart/{UserId}")]
+        public IActionResult UpdateProductInCart([FromHeader] string Token, int UserId, [FromQuery] int CartId, [FromQuery] int Quantity)
+        {
+            var respone = _cartRepository.UpdateProductInCart(Token, UserId, CartId, Quantity);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
+
     }
 }
