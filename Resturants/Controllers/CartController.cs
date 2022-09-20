@@ -32,17 +32,17 @@ namespace Resturants.Controllers
         }
 
 
-        [HttpPost("AddToCart/{UserId}")]
-        public IActionResult AddToCart([FromHeader] string Token, int UserId, [FromForm] CartRequest CartRequest)
+      [HttpPost("AddToCart/{UserId}")]
+        public IActionResult AddToCart([FromHeader] string Token, int UserId, int cartId, [FromForm] CartRequest CartRequest)
         {
-            var respone = _cartRepository.AddToCart(Token, UserId, CartRequest);
+            var respone = _cartRepository.AddToCart(Token, UserId, cartId, CartRequest);
             if (respone.Code == 401)
                 return Unauthorized(respone);
             if (respone.Code == 400)
                 return BadRequest(respone);
             return Ok(respone);
         }
-
+        /*  
 
         [HttpDelete("RemoveFromCart/{UserId}")]
         public IActionResult RemoveFromCart([FromHeader] string Token, int UserId, [FromQuery] int CartId)
@@ -65,7 +65,7 @@ namespace Resturants.Controllers
                 return BadRequest(respone);
             return Ok(respone);
         }
-
+*/
 
     }
 }

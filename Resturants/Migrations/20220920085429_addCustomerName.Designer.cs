@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Resturants.Helper;
 
@@ -11,9 +12,10 @@ using Resturants.Helper;
 namespace Resturants.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20220920085429_addCustomerName")]
+    partial class addCustomerName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -78,10 +80,7 @@ namespace Resturants.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ParentId")
+                    b.Property<int?>("CartId")
                         .HasColumnType("int");
 
                     b.Property<float>("Price")
@@ -89,6 +88,9 @@ namespace Resturants.Migrations
 
                     b.Property<string>("ProductDescription")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ProductName")
                         .HasColumnType("nvarchar(max)");
@@ -103,7 +105,7 @@ namespace Resturants.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.ToTable("CartProducts");
+                    b.ToTable("CartProduct");
                 });
 
             modelBuilder.Entity("Resturants.Models.Photo", b =>
@@ -282,9 +284,7 @@ namespace Resturants.Migrations
                 {
                     b.HasOne("Resturants.Models.Cart", null)
                         .WithMany("CartProducts")
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CartId");
                 });
 
             modelBuilder.Entity("Resturants.Models.Photo", b =>

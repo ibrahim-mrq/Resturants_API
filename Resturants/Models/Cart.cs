@@ -8,13 +8,8 @@ namespace Resturants.Models
         [Key]
         public int Id { get; set; }
         public int UserId { get; set; }
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-        public float Price { get; set; }
-        public string? ProductName { get; set; }
-        public string? ProductDescription { get; set; }
-        public string? ProductPhoto { get; set; }
-
-
+        public string? CustomerName { get; set; }
+        public List<CartProduct> CartProducts { get; set; }
+        public int ProdcutCount { get; set; }
     }
 }

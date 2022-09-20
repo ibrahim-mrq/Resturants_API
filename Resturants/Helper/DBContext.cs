@@ -18,6 +18,7 @@ namespace Resturants.Helper
 
 
         public DbSet<Cart> Carts { get; set; }
+        public DbSet<CartProduct> CartProducts { get; set; }
 
     }
 }
