@@ -32,8 +32,8 @@ namespace Resturants.Controllers
         }
 
 
-      [HttpPost("AddToCart/{UserId}")]
-        public IActionResult AddToCart([FromHeader] string Token, int UserId, int cartId, [FromForm] CartRequest CartRequest)
+        [HttpPost("AddToCart/{UserId}")]
+        public IActionResult AddToCart([FromHeader] string Token, int UserId, [FromForm] int cartId, [FromForm] CartRequest CartRequest)
         {
             var respone = _cartRepository.AddToCart(Token, UserId, cartId, CartRequest);
             if (respone.Code == 401)
@@ -42,30 +42,51 @@ namespace Resturants.Controllers
                 return BadRequest(respone);
             return Ok(respone);
         }
+
+
+
+
+        [HttpDelete("RemoveProductFromCart/{UserId}")]
+        public IActionResult RemoveProductFromCart([FromHeader] string Token, int UserId, [FromForm] int CartId, [FromForm] int ProductId)
+        {
+            var respone = _cartRepository.RemoveProductFromCart(Token, UserId, CartId, ProductId);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
+
         /*  
-
-        [HttpDelete("RemoveFromCart/{UserId}")]
-        public IActionResult RemoveFromCart([FromHeader] string Token, int UserId, [FromQuery] int CartId)
-        {
-            var respone = _cartRepository.RemoveFromCart(Token, UserId, CartId);
-            if (respone.Code == 401)
-                return Unauthorized(respone);
-            if (respone.Code == 400)
-                return BadRequest(respone);
-            return Ok(respone);
-        }
-
-        [HttpPut("UpdateProductInCart/{UserId}")]
-        public IActionResult UpdateProductInCart([FromHeader] string Token, int UserId, [FromQuery] int CartId, [FromQuery] int Quantity)
-        {
-            var respone = _cartRepository.UpdateProductInCart(Token, UserId, CartId, Quantity);
-            if (respone.Code == 401)
-                return Unauthorized(respone);
-            if (respone.Code == 400)
-                return BadRequest(respone);
-            return Ok(respone);
-        }
+       [HttpPut("UpdateProductInCart/{UserId}")]
+       public IActionResult UpdateProductInCart([FromHeader] string Token, int UserId, [FromQuery] int CartId, [FromQuery] int Quantity)
+       {
+           var respone = _cartRepository.UpdateProductInCart(Token, UserId, CartId, Quantity);
+           if (respone.Code == 401)
+               return Unauthorized(respone);
+           if (respone.Code == 400)
+               return BadRequest(respone);
+           return Ok(respone);
+       }
 */
+
+        [HttpDelete("ClearAllCart")]
+        public IActionResult ClearAllCart()
+        {
+            var respone = _cartRepository.ClearAllCart();
+            return Ok(respone);
+        }
+
+        [HttpDelete("DeleteCartById/{CartId}")]
+        public IActionResult DeleteCartById(int CartId)
+        {
+            var respone = _cartRepository.DeleteCartById(CartId);
+            if (respone.Code == 401)
+                return Unauthorized(respone);
+            if (respone.Code == 400)
+                return BadRequest(respone);
+            return Ok(respone);
+        }
 
     }
 }

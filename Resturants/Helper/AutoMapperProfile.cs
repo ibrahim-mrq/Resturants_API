@@ -25,8 +25,7 @@ namespace Resturants.Helper
             CreateMap<PhotoRequest, Photo>();
 
 
-            CreateMap<Cart, CartResponse>();
-            CreateMap<CartRequest, Cart>();
+            CreateMap<Cart, Cart>().ForMember(dest => dest.ProdcutCount, opt => opt.MapFrom(src => src.CartProducts.Count));
 
         }
     }

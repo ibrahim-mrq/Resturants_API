@@ -1,18 +1,8 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json.Linq;
 using Resturants.DTO.Requests;
-using Resturants.DTO.Responses;
 using Resturants.Helper;
 using Resturants.Models;
 using Resturants.Repositories.Interfaces;
-using System;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using System.Xml.Linq;
-using IHostingEnvironment = Microsoft.AspNetCore.Hosting.IHostingEnvironment;
 
 namespace Resturants.Repositories.other
 {
@@ -89,7 +79,6 @@ namespace Resturants.Repositories.other
             {
                 return new OperationType() { Status = false, Message = "Product Id not exists!", Code = 400 };
             }
-
             var newProduct = new CartProduct()
             {
                 ParentId = product.Id,
@@ -100,18 +89,20 @@ namespace Resturants.Repositories.other
                 ProductDescription = product.Description,
                 ProductPhoto = product.Photo,
             };
-            /*
-                        var cart = _dbContext.Carts.Where(x => x.Id.Equals(cartId)).SingleOrDefault();
-                        if (cart != null)
-                        {
-
-                            cart.CartProducts.Add(newProduct);
-                            _dbContext.CartProducts.Add(newProduct);
-                            _dbContext.Carts.Update(cart);
-                            _dbContext.SaveChanges();
-                            return new OperationType() { Status = false, Message = "Cart Id not exists!", Code = 400 };
-                        }*/
-
+            var cart = _dbContext.Carts.Where(x => x.UserId == UserId && x.Id == cartId).SingleOrDefault();
+            if (cart != null)
+            {
+                _dbContext.CartProducts.Add(newProduct);
+                _dbContext.Carts.Update(cart);
+                _dbContext.SaveChanges();
+                return new OperationType()
+                {
+                    Status = true,
+                    Message = "update cart product !",
+                    Code = 200,
+                    Data = new { cart }
+                };
+            }
             var newCart = new Cart()
             {
                 Id = newProduct.Id,
@@ -131,90 +122,112 @@ namespace Resturants.Repositories.other
                 Message = "add to cart success",
                 Data = new { cart = newCart }
             };
-
-
-            /*
-            var cart = _dbContext.Carts.Where(x => x.ProductId.Equals(CartRequest.ProductId)).SingleOrDefault();
-            if (cart != null)
-            {
-                cart.Quantity = cart.Quantity + CartRequest.Quantity;
-                //   CartRequest.Quantity = cart.Quantity + CartRequest.Quantity;
-                var currentCart = _map.Map<Cart>(cart);
-                _dbContext.Carts.Update(currentCart);
-                _dbContext.SaveChanges();
-                result.Message = "update cart success";
-                result.Data = new { carts = _map.Map<CartResponse>(currentCart) };
-                return result;
-            }
-            var carts = _map.Map<Cart>(CartRequest);
-            carts.ProductDescription = product.Description;
-            carts.ProductPhoto = product.Photo;
-            carts.ProductName = product.Name;
-            carts.Price = product.Price;
-            carts.UserId = UserId;
-            _dbContext.Carts.Add(carts);
-            _dbContext.SaveChanges();
-            result.Message = "add to cart success";
-            result.Data = new { carts = _map.Map<CartResponse>(carts) };*/
             return result;
         }
-        /* 
-              public OperationType RemoveFromCart(string Token, int UserId, int CartId)
-              {
-                  var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
-                  if (user == null)
-                  {
-                      return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
-                  }
-                  if (string.IsNullOrEmpty(Token) || user.Token != Token)
-                  {
-                      return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
-                  }
-                  var cart = _dbContext.Carts.Where(x => x.Id.Equals(CartId)).SingleOrDefault();
-                  if (cart == null)
-                  {
-                      return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
-                  }
-                  _dbContext.Carts.Remove(cart);
-                  _dbContext.SaveChanges();
-                  var result = new OperationType()
-                  {
-                      Status = true,
-                      Code = 200,
-                      Message = "Product removed form cart success!",
-                      Data = new { carts = _map.Map<CartResponse>(cart) }
-                  };
-                  return result;
-              }
 
-              public OperationType UpdateProductInCart(string Token, int UserId, int CartId, int Quantity)
-              {
-                  var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
-                  if (user == null)
-                  {
-                      return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
-                  }
-                  if (string.IsNullOrEmpty(Token) || user.Token != Token)
-                  {
-                      return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
-                  }
-                  var cart = _dbContext.Carts.Where(x => x.Id.Equals(CartId)).SingleOrDefault();
-                  if (cart == null)
-                  {
-                      return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
-                  }
-                  cart.Quantity = Quantity;
-                  _dbContext.Carts.Update(cart);
-                  _dbContext.SaveChanges();
-                  var result = new OperationType()
-                  {
-                      Status = true,
-                      Code = 200,
-                      Message = "Update Product in cart success!",
-                      Data = new { carts = _map.Map<CartResponse>(cart) }
-                  };
-                  return result;
-              }*/
+        public OperationType RemoveProductFromCart(string Token, int UserId, int CartId, int ProductId)
+        {
+            var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
+            if (user == null)
+            {
+                return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+            }
+            if (string.IsNullOrEmpty(Token) || user.Token != Token)
+            {
+                return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+            }
+            var cart = _dbContext.Carts.Where(x => x.Id == CartId).SingleOrDefault();
+            if (cart == null)
+            {
+                return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
+            }
+            var product = _dbContext.CartProducts.Where(x => x.CartId == CartId && x.Id == ProductId).SingleOrDefault();
+            if (product == null)
+            {
+                return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
+            }
+            _dbContext.CartProducts.Remove(product);
+            _dbContext.SaveChanges();
+            var result = new OperationType()
+            {
+                Status = true,
+                Code = 200,
+                Message = "Product removed form cart success!"
+            };
+            return result;
+        }
+
+        /* 
+           public OperationType UpdateProductInCart(string Token, int UserId, int CartId, int Quantity)
+           {
+               var user = _dbContext.Users.Where(x => x.Id.Equals(UserId) && x.IsDelete == false && x.Type == Constants.TYPE_USER).SingleOrDefault();
+               if (user == null)
+               {
+                   return new OperationType() { Status = false, Message = "User Id not exists!", Code = 400 };
+               }
+               if (string.IsNullOrEmpty(Token) || user.Token != Token)
+               {
+                   return new OperationType() { Status = false, Message = "Unauthorized!", Code = 401 };
+               }
+               var cart = _dbContext.Carts.Where(x => x.Id.Equals(CartId)).SingleOrDefault();
+               if (cart == null)
+               {
+                   return new OperationType() { Status = false, Message = "Product Id in cart not exists!", Code = 400 };
+               }
+               cart.Quantity = Quantity;
+               _dbContext.Carts.Update(cart);
+               _dbContext.SaveChanges();
+               var result = new OperationType()
+               {
+                   Status = true,
+                   Code = 200,
+                   Message = "Update Product in cart success!",
+                   Data = new { carts = _map.Map<CartResponse>(cart) }
+               };
+               return result;
+           }*/
+
+
+        public OperationType ClearAllCart()
+        {
+
+            var Cart = _dbContext.Carts.ToList();
+            var CartProducts = _dbContext.CartProducts.ToList();
+            _dbContext.Carts.RemoveRange(Cart);
+            _dbContext.CartProducts.RemoveRange(CartProducts);
+            _dbContext.SaveChanges();
+            return new OperationType()
+            {
+                Status = true,
+                Message = "cart have been successfully deleted!",
+                Code = 200
+            };
+        }
+
+        public OperationType DeleteCartById(int CartId)
+        {
+
+            var Cart = _dbContext.Carts.Where(x => x.Id == CartId).FirstOrDefault();
+            if (Cart == null)
+            {
+                return new OperationType()
+                {
+                    Status = false,
+                    Message = "cart id not exiest!",
+                    Code = 400
+                };
+            }
+            var CartProducts = _dbContext.CartProducts.Where(x => x.CartId == CartId).ToList();
+            _dbContext.Carts.Remove(Cart);
+            _dbContext.CartProducts.RemoveRange(CartProducts);
+            _dbContext.SaveChanges();
+            return new OperationType()
+            {
+                Status = true,
+                Message = $"CartId:{CartId} have been successfully deleted!",
+                Code = 200
+            };
+        }
 
     }
 }

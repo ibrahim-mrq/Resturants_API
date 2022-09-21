@@ -7,8 +7,11 @@ namespace Resturants.Repositories.Interfaces
     {
         OperationType GetCart(string Token, int UserId);
         OperationType AddToCart(string Token, int UserId, int cartId, CartRequest CartRequest);
+        OperationType ClearAllCart();
+        OperationType DeleteCartById(int CartId);
+        OperationType RemoveProductFromCart(string Token, int UserId, int CartId, int ProductId);
         /*    OperationType RemoveFromCart(string Token, int UserId, int CartId);
-         OperationType UpdateProductInCart(string Token, int UserId, int CartId, int Quantity);
- */
+OperationType UpdateProductInCart(string Token, int UserId, int CartId, int Quantity);
+*/
     }
 }
