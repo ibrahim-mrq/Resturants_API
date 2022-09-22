@@ -9,7 +9,8 @@ namespace Resturants.Models
         public int Id { get; set; }
         public int UserId { get; set; }
         public string? CustomerName { get; set; }
+        public int TotleProduct { get; set; }
+        public float TotlePrice { get; set; }
         public List<CartProduct> CartProducts { get; set; }
-        public int ProdcutCount { get; set; }
     }
 }

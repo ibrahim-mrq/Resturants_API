@@ -9,14 +9,11 @@ namespace Resturants.Repositories.other
     public class CartRepository : ICartRepository
     {
         private readonly DBContext _dbContext;
-        private readonly IMapper _map;
 
-        public CartRepository(DBContext dBContext, IMapper map)
+        public CartRepository(DBContext dBContext)
         {
             this._dbContext = dBContext;
-            this._map = map;
         }
-
 
 
         public OperationType GetCart(string Token, int UserId)
@@ -36,11 +33,14 @@ namespace Resturants.Repositories.other
             var totlePrice = 0.0;
             foreach (var item in list)
             {
-                item.CartProducts = _dbContext.CartProducts.Where(x => x.CartId == item.Id).ToList();
-                item.ProdcutCount = _dbContext.CartProducts.Where(x => x.CartId == item.Id).ToList().Count;
+                var cartProducts = _dbContext.CartProducts.Where(x => x.CartId == item.Id).ToList();
+                item.CartProducts = cartProducts;
+                item.TotleProduct = cartProducts.Count;
+
                 foreach (var product in item.CartProducts)
                 {
                     totlePrice += product.Quantity * product.Price;
+                    item.TotlePrice += product.Quantity * product.Price;
                 }
 
             }
@@ -54,10 +54,9 @@ namespace Resturants.Repositories.other
                 Message = "success",
                 Data = new
                 {
-                    carts = list,
-                    totlePrice,
                     totleProduct = list.Count,
-
+                    totlePrice,
+                    carts = list,
                 }
             };
             return result;
@@ -93,6 +92,7 @@ namespace Resturants.Repositories.other
             if (cart != null)
             {
                 _dbContext.CartProducts.Add(newProduct);
+                cart.CustomerName ??= CartRequest.CustomerName.Trim();
                 _dbContext.Carts.Update(cart);
                 _dbContext.SaveChanges();
                 return new OperationType()
@@ -107,8 +107,9 @@ namespace Resturants.Repositories.other
             {
                 Id = newProduct.Id,
                 CartProducts = new List<CartProduct>() { newProduct },
-                CustomerName = CartRequest.CustomerName,
-                ProdcutCount = 0,
+                CustomerName = CartRequest.CustomerName == null ? "non" : CartRequest.CustomerName,
+                TotleProduct = 0,
+                TotlePrice = 0,
                 UserId = UserId,
             };
 
